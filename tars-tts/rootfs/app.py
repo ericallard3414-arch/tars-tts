@@ -41,7 +41,6 @@ def ensure_voice(voice: str) -> str:
         VOICES_DIR,
         voice,
     ]
-
     r = subprocess.run(cmd, capture_output=True, text=True)
 
     if r.returncode != 0:
@@ -72,32 +71,28 @@ def tts(text: str, voice: str | None = None):
         # ---- AUDIO SHAPING CONTROLS ----
         grit = float(opts.get("grit", 0.03))
         lowpass = int(opts.get("lowpass", 3200))
-        
+
         # New knobs (easier to reason about)
         pitch_shift = float(opts.get("pitch_shift", 0.92))  # <1.0 = deeper
         tempo = float(opts.get("tempo", 0.92))              # <1.0 = slower
-        
+
         # clamps
         pitch_shift = min(max(pitch_shift, 0.80), 1.10)
         tempo = min(max(tempo, 0.80), 1.10)
         grit = min(max(grit, 0.0), 0.10)
         lowpass = min(max(lowpass, 2000), 5000)
-        
+
+        # FFmpeg filter chain
+        # - aresample=44100 ensures predictable pitch math
+        # - asetrate shifts pitch (and speed), then atempo restores speed
+        # - second atempo sets final speaking speed
         ffmpeg_af = (
-            # keep your tone shaping first
+            "aresample=44100,"
             "highpass=f=170,"
             f"lowpass=f={lowpass},"
-        
-            # pitch without changing duration:
-            # 1) change sample rate (changes pitch+speed)
-            # 2) restore speed with atempo (keeps pitch change)
             f"asetrate=44100*{pitch_shift},"
             f"atempo={1.0/pitch_shift},"
-        
-            # now apply your final desired speed
             f"atempo={tempo},"
-        
-            # dynamics + grit
             "acompressor=threshold=-22dB:ratio=3.0:attack=8:release=90:makeup=5,"
             f"acrusher=bits=15:mix={grit}"
         )
@@ -171,8 +166,3 @@ def tts(text: str, voice: str | None = None):
 
     except Exception as e:
         return JSONResponse({"error": "server_failed", "details": str(e)}, status_code=500)
-
-
-
-
-
