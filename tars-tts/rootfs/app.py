@@ -69,18 +69,35 @@ def tts(text: str, voice: str | None = None):
         length_scale = float(opts.get("length_scale", 1.0))
         noise_scale = float(opts.get("noise_scale", 0.667))
 
-        # ---- NEW AUDIO SHAPING CONTROLS ----
-grit = float(opts.get("grit", 0.04))
-lowpass = int(opts.get("lowpass", 3000))
-pitch = float(opts.get("pitch", 0.92))   # 0.92 subtle, 0.90 deeper
+        # ---- AUDIO SHAPING CONTROLS ----
+        grit = float(opts.get("grit", 0.04))
+        lowpass = int(opts.get("lowpass", 3000))
+        pitch = float(opts.get("pitch", 0.92))  # 0.92 subtle, 0.90 deeper
 
-ffmpeg_af = (
-    f"asetrate=44100*{pitch},atempo=1/{pitch},"
-    "highpass=f=180,"
-    f"lowpass=f={lowpass},"
-    "acompressor=threshold=-21dB:ratio=3.2:attack=6:release=85:makeup=5,"
-    f"acrusher=bits=15:mix={grit}"
-)
+        # Optional: clamp to sane ranges
+        if pitch < 0.85:
+            pitch = 0.85
+        if pitch > 1.05:
+            pitch = 1.05
+        if grit < 0.0:
+            grit = 0.0
+        if grit > 0.10:
+            grit = 0.10
+        if lowpass < 2000:
+            lowpass = 2000
+        if lowpass > 5000:
+            lowpass = 5000
+
+        ffmpeg_af = (
+            f"asetrate=44100*{pitch},atempo=1/{pitch},"
+            "highpass=f=180,"
+            f"lowpass=f={lowpass},"
+            "acompressor=threshold=-21dB:ratio=3.2:attack=6:release=85:makeup=5,"
+            f"acrusher=bits=15:mix={grit}"
+        )
+
+        raw_path = None
+        out_path = None
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as rawf:
             raw_path = rawf.name
@@ -119,12 +136,9 @@ ffmpeg_af = (
                 "ffmpeg",
                 "-y",
                 "-hide_banner",
-                "-loglevel",
-                "error",
-                "-i",
-                raw_path,
-                "-af",
-                ffmpeg_af,
+                "-loglevel", "error",
+                "-i", raw_path,
+                "-af", ffmpeg_af,
                 out_path,
             ]
 
@@ -132,7 +146,7 @@ ffmpeg_af = (
 
             if r.returncode != 0 or not os.path.exists(out_path) or os.path.getsize(out_path) < 1000:
                 return JSONResponse(
-                    {"error": "ffmpeg_failed", "details": (r.stderr or "")[-2000:]},
+                    {"error": "ffmpeg_failed", "details": (r.stderr or "")[-2000:], "af": ffmpeg_af},
                     status_code=500,
                 )
 
@@ -144,7 +158,7 @@ ffmpeg_af = (
         finally:
             for pth in (raw_path, out_path):
                 try:
-                    if os.path.exists(pth):
+                    if pth and os.path.exists(pth):
                         os.remove(pth)
                 except Exception:
                     pass
