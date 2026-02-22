@@ -74,11 +74,12 @@ def tts(text: str, voice: str | None = None):
         lowpass = int(opts.get("lowpass", 3000))      # 2800–3400 sweet spot
 
         ffmpeg_af = (
-            f"highpass=f=180,"
-            f"lowpass=f={lowpass},"
-            "acompressor=threshold=-20dB:ratio=3:attack=8:release=90:makeup=5,"
-            f"acrusher=bits=14:mix={grit}"
-        )
+    "asetrate=44100*0.92,atempo=1/0.92,"
+    "highpass=f=180,"
+    f"lowpass=f={lowpass},"
+    "acompressor=threshold=-21dB:ratio=3.2:attack=6:release=85:makeup=5,"
+    f"acrusher=bits=15:mix={grit}"
+)
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as rawf:
             raw_path = rawf.name
@@ -149,5 +150,6 @@ def tts(text: str, voice: str | None = None):
 
     except Exception as e:
         return JSONResponse({"error": "server_failed", "details": str(e)}, status_code=500)
+
 
 
