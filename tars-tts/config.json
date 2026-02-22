@@ -3,37 +3,27 @@
   "version": "1.0.9",
   "slug": "tars-tts",
   "description": "Generate TARS-style TTS audio server-side using Piper + FFmpeg filters.",
-  "arch": ["amd64", "aarch64"],
+  "arch": ["aarch64", "amd64"],
   "startup": "services",
   "boot": "auto",
   "init": false,
   "ingress": false,
-
   "ports": {
     "8000/tcp": 8000
   },
-
-  "map": [
-    "addon_config:rw",
-    "media:rw"
-  ],
-
-"options": {
-  "voice": "en_US-ryan-medium",
-  "length_scale": 1.1,
-  "noise_scale": 0.45,
-  "grit": 0.04,
-  "lowpass": 3000
-},
-"schema": {
-  "voice": "str",
-  "length_scale": "float",
-  "noise_scale": "float",
-  "grit": "float",
-  "lowpass": "int"
+  "map": ["share:rw"],
+  "options": {
+    "voice": "en_US-ryan-medium",
+    "length_scale": 1.1,
+    "noise_scale": 0.45,
+    "grit": 0.04,
+    "lowpass": 3000
+  },
+  "schema": {
+    "voice": "str",
+    "length_scale": "float",
+    "noise_scale": "float",
+    "grit": "float",
+    "lowpass": "int"
+  }
 }
-
-
-
-
-
