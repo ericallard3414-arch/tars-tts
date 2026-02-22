@@ -18,19 +18,20 @@
     "media:rw"
   ],
 
-  "options": {
-    "voice": "en_US-ryan-medium",
-    "length_scale": 1.1,
-    "noise_scale": 0.45,
-    "cadence": 0.8
-  },
-
-  "schema": {
-    "voice": "str",
-    "length_scale": "float",
-    "noise_scale": "float",
-    "cadence": "float"
-  }
+"options": {
+  "voice": "en_US-ryan-medium",
+  "length_scale": 1.1,
+  "noise_scale": 0.45,
+  "grit": 0.04,
+  "lowpass": 3000
+},
+"schema": {
+  "voice": "str",
+  "length_scale": "float",
+  "noise_scale": "float",
+  "grit": "float",
+  "lowpass": "int"
 }
+
 
 
