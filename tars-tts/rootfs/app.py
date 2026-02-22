@@ -70,11 +70,12 @@ def tts(text: str, voice: str | None = None):
         noise_scale = float(opts.get("noise_scale", 0.667))
 
         # ---- NEW AUDIO SHAPING CONTROLS ----
-        grit = float(opts.get("grit", 0.04))          # 0.02–0.06 recommended
-        lowpass = int(opts.get("lowpass", 3000))      # 2800–3400 sweet spot
+grit = float(opts.get("grit", 0.04))
+lowpass = int(opts.get("lowpass", 3000))
+pitch = float(opts.get("pitch", 0.92))   # 0.92 subtle, 0.90 deeper
 
-        ffmpeg_af = (
-    "asetrate=44100*0.92,atempo=1/0.92,"
+ffmpeg_af = (
+    f"asetrate=44100*{pitch},atempo=1/{pitch},"
     "highpass=f=180,"
     f"lowpass=f={lowpass},"
     "acompressor=threshold=-21dB:ratio=3.2:attack=6:release=85:makeup=5,"
@@ -150,6 +151,7 @@ def tts(text: str, voice: str | None = None):
 
     except Exception as e:
         return JSONResponse({"error": "server_failed", "details": str(e)}, status_code=500)
+
 
 
 
