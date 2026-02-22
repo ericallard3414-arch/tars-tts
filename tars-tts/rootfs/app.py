@@ -33,11 +33,19 @@ def ensure_voice(voice: str) -> str:
     if os.path.exists(model_path) and os.path.exists(json_path):
         return model_path
 
-    cmd = ["python", "-m", "piper.download_voices", "--output-dir", VOICES_DIR, "--voice", voice]
+    cmd = [
+        "python",
+        "-m",
+        "piper.download_voices",
+        "--download-dir",
+        VOICES_DIR,
+        voice
+    ]
+
     r = subprocess.run(cmd, capture_output=True, text=True)
 
     if r.returncode != 0:
-        raise RuntimeError(f"voice_download_failed: {r.stderr[-1200:]}")
+        raise RuntimeError(f"voice_download_failed: {r.stderr[-1600:]}")
 
     if not (os.path.exists(model_path) and os.path.exists(json_path)):
         raise RuntimeError("voice_download_failed: files not found after download")
@@ -77,3 +85,4 @@ def tts(text: str, voice: str | None = None):
 
     except Exception as e:
         return JSONResponse({"error": "server_failed", "details": str(e)}, status_code=500)
+
