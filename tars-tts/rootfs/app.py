@@ -70,29 +70,35 @@ def tts(text: str, voice: str | None = None):
         noise_scale = float(opts.get("noise_scale", 0.667))
 
         # ---- AUDIO SHAPING CONTROLS ----
-        grit = float(opts.get("grit", 0.04))
-        lowpass = int(opts.get("lowpass", 3000))
-        pitch = float(opts.get("pitch", 0.92))  # 0.92 subtle, 0.90 deeper
-
-        # Optional: clamp to sane ranges
-        if pitch < 0.85:
-            pitch = 0.85
-        if pitch > 1.05:
-            pitch = 1.05
-        if grit < 0.0:
-            grit = 0.0
-        if grit > 0.10:
-            grit = 0.10
-        if lowpass < 2000:
-            lowpass = 2000
-        if lowpass > 5000:
-            lowpass = 5000
-
+        grit = float(opts.get("grit", 0.03))
+        lowpass = int(opts.get("lowpass", 3200))
+        
+        # New knobs (easier to reason about)
+        pitch_shift = float(opts.get("pitch_shift", 0.92))  # <1.0 = deeper
+        tempo = float(opts.get("tempo", 0.92))              # <1.0 = slower
+        
+        # clamps
+        pitch_shift = min(max(pitch_shift, 0.80), 1.10)
+        tempo = min(max(tempo, 0.80), 1.10)
+        grit = min(max(grit, 0.0), 0.10)
+        lowpass = min(max(lowpass, 2000), 5000)
+        
         ffmpeg_af = (
-            f"asetrate=44100*{pitch},atempo=1/{pitch},"
-            "highpass=f=180,"
+            # keep your tone shaping first
+            "highpass=f=170,"
             f"lowpass=f={lowpass},"
-            "acompressor=threshold=-21dB:ratio=3.2:attack=6:release=85:makeup=5,"
+        
+            # pitch without changing duration:
+            # 1) change sample rate (changes pitch+speed)
+            # 2) restore speed with atempo (keeps pitch change)
+            f"asetrate=44100*{pitch_shift},"
+            f"atempo={1.0/pitch_shift},"
+        
+            # now apply your final desired speed
+            f"atempo={tempo},"
+        
+            # dynamics + grit
+            "acompressor=threshold=-22dB:ratio=3.0:attack=8:release=90:makeup=5,"
             f"acrusher=bits=15:mix={grit}"
         )
 
@@ -165,6 +171,7 @@ def tts(text: str, voice: str | None = None):
 
     except Exception as e:
         return JSONResponse({"error": "server_failed", "details": str(e)}, status_code=500)
+
 
 
 
