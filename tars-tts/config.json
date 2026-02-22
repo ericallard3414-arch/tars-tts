@@ -1,6 +1,6 @@
 {
   "name": "TARS TTS (Piper + FFmpeg)",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "slug": "tars-tts",
   "description": "Generate TARS-style TTS audio server-side using Piper + FFmpeg filters.",
   "arch": ["amd64", "aarch64"],
@@ -32,3 +32,4 @@
     "cadence": "float"
   }
 }
+
